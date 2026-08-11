@@ -25,6 +25,15 @@ jobs:
       - name: Build with Maven
         run: mvn clean verify
 
+      - name: Build with Maven
+        run: mvn clean verify
+
+      - name: Set up JDK 21 for SonarCloud
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
       - name: SonarCloud
         run: >
           mvn sonar:sonar
