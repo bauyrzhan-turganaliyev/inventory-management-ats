@@ -4,6 +4,7 @@ public class Product {
 
 	private final String name;
 	private final double price;
+	private Category category;
 
 	public Product(String name, double price) {
 		validate(name, price);
@@ -24,6 +25,14 @@ public class Product {
 		if (price < 0) {
 			throw new IllegalArgumentException("Product price cannot be negative");
 		}
+	}
+
+	public void setCategory(Category category) {
+		this.category = category;
+	}
+
+	public Category getCategory() {
+		return category;
 	}
 
 	public String getName() {
