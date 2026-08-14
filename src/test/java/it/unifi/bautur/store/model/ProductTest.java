@@ -16,7 +16,7 @@ class ProductTest {
 	}
 
 	@Test
-	void testproductShouldStoreAssignedCategory() {
+	void testProductShouldStoreAssignedCategory() {
 		Product product = new Product("Laptop", 1200.50);
 		Category category = new Category("Electronics");
 
@@ -48,5 +48,12 @@ class ProductTest {
 		Product product = new Product("Freebie", 0.0);
 
 		assertThat(product.getPrice()).isEqualTo(0.0);
+	}
+
+	@Test
+	void testProductShouldHaveNoCategory() {
+		Product product = new Product("Laptop", 1200.50);
+
+		assertThat(product.getCategory()).isNull();
 	}
 }
