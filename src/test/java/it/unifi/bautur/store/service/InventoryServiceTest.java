@@ -82,4 +82,14 @@ class InventoryServiceTest {
 
 	    assertThat(result).contains(product);
 	}
+	
+	@Test
+	void getProductByIdShouldReturnEmptyWhenProductDoesNotExist() {
+	    when(productRepository.findById(99L))
+	            .thenReturn(Optional.empty());
+
+	    Optional<Product> result = service.getProductById(99L);
+
+	    assertThat(result).isEmpty();
+	}
 }
