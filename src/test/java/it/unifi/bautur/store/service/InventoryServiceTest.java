@@ -69,4 +69,16 @@ class InventoryServiceTest {
 
 	    verify(productRepository).save(product);
 	}
+	
+	@Test
+	void getProductByIdShouldReturnProduct() {
+	    Product product = new Product("Laptop", 1200.50);
+
+	    when(productRepository.findById(1L))
+	            .thenReturn(Optional.of(product));
+
+	    Optional<Product> result = service.getProductById(1L);
+
+	    assertThat(result).contains(product);
+	}
 }
