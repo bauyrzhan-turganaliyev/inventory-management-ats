@@ -1,6 +1,7 @@
 package it.unifi.bautur.store.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import it.unifi.bautur.store.model.Product;
 import it.unifi.bautur.store.repository.TransactionManager;
@@ -24,5 +25,11 @@ public class InventoryService {
             provider.getProductRepository().save(product);
             return null;
         });
+    }
+    
+    public Optional<Product> getProductById(Long id) {
+        return transactionManager.doInTransaction(
+                provider -> provider.getProductRepository().findById(id)
+        );
     }
 }
