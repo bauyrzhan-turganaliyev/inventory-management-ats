@@ -59,4 +59,13 @@ class InventoryServiceTest {
 
 	    assertThat(result).isEqualTo(products);
 	}
+	
+	@Test
+	void addProductShouldSaveProduct() {
+	    Product product = new Product("Laptop", 1200.50);
+
+	    service.addProduct(product);
+
+	    verify(productRepository).save(product);
+	}
 }
