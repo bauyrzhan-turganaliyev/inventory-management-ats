@@ -18,4 +18,11 @@ public class InventoryService {
                 provider -> provider.getProductRepository().findAll()
         );
     }
+
+    public void addProduct(Product product) {
+        transactionManager.doInTransaction(provider -> {
+            provider.getProductRepository().save(product);
+            return null;
+        });
+    }
 }
