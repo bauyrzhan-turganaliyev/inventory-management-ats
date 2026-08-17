@@ -8,28 +8,31 @@ import it.unifi.bautur.store.repository.TransactionManager;
 
 public class InventoryService {
 
-    private final TransactionManager transactionManager;
+	private final TransactionManager transactionManager;
 
-    public InventoryService(TransactionManager transactionManager) {
-        this.transactionManager = transactionManager;
-    }
+	public InventoryService(TransactionManager transactionManager) {
+		this.transactionManager = transactionManager;
+	}
 
-    public List<Product> getAllProducts() {
-        return transactionManager.doInTransaction(
-                provider -> provider.getProductRepository().findAll()
-        );
-    }
+	public List<Product> getAllProducts() {
+		return transactionManager.doInTransaction(provider -> provider.getProductRepository().findAll());
+	}
 
-    public void addProduct(Product product) {
-        transactionManager.doInTransaction(provider -> {
-            provider.getProductRepository().save(product);
-            return null;
-        });
-    }
-    
-    public Optional<Product> getProductById(Long id) {
-        return transactionManager.doInTransaction(
-                provider -> provider.getProductRepository().findById(id)
-        );
-    }
+	public void addProduct(Product product) {
+		transactionManager.doInTransaction(provider -> {
+			provider.getProductRepository().save(product);
+			return null;
+		});
+	}
+
+	public Optional<Product> getProductById(Long id) {
+		return transactionManager.doInTransaction(provider -> provider.getProductRepository().findById(id));
+	}
+
+	public void deleteProduct(Long id) {
+		transactionManager.doInTransaction(provider -> {
+			provider.getProductRepository().deleteById(id);
+			return null;
+		});
+	}
 }
