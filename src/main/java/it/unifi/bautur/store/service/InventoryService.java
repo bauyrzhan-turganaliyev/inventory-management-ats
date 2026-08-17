@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import it.unifi.bautur.store.model.Product;
 import it.unifi.bautur.store.repository.TransactionManager;
+import it.unifi.bautur.store.model.Category;
 
 public class InventoryService {
 
@@ -40,6 +41,24 @@ public class InventoryService {
 
 	    transactionManager.doInTransaction(provider -> {
 	        provider.getProductRepository().deleteById(id);
+	        return null;
+	    });
+	}
+	
+	public void assignCategoryToProduct(Long productId, Long categoryId) {
+	    transactionManager.doInTransaction(provider -> {
+	        Product product = provider.getProductRepository()
+	                .findById(productId)
+	                .orElseThrow();
+
+	        Category category = provider.getCategoryRepository()
+	                .findById(categoryId)
+	                .orElseThrow();
+
+	        product.setCategory(category);
+
+	        provider.getProductRepository().save(product);
+
 	        return null;
 	    });
 	}
