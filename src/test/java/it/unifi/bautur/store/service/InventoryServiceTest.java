@@ -120,4 +120,11 @@ class InventoryServiceTest {
 	            .isInstanceOf(IllegalArgumentException.class)
 	            .hasMessage("Product cannot be null");
 	}
+	
+	@Test
+	void deleteProductShouldThrowWhenIdIsNull() {
+	    assertThatThrownBy(() -> service.deleteProduct(null))
+	            .isInstanceOf(IllegalArgumentException.class)
+	            .hasMessage("Product id cannot be null");
+	}
 }
