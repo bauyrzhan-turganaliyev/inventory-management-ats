@@ -92,4 +92,11 @@ class InventoryServiceTest {
 
 	    assertThat(result).isEmpty();
 	}
+	
+	@Test
+	void deleteProductShouldDeleteProductById() {
+	    service.deleteProduct(1L);
+
+	    verify(productRepository).deleteById(1L);
+	}
 }
