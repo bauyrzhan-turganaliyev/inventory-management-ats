@@ -1,26 +1,25 @@
 package it.unifi.bautur.store.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import it.unifi.bautur.store.repository.ProductRepository;
-import it.unifi.bautur.store.repository.RepositoryProvider;
-import it.unifi.bautur.store.repository.TransactionCode;
-import it.unifi.bautur.store.repository.TransactionManager;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import it.unifi.bautur.store.model.Product;
+import it.unifi.bautur.store.repository.ProductRepository;
+import it.unifi.bautur.store.repository.RepositoryProvider;
+import it.unifi.bautur.store.repository.TransactionCode;
+import it.unifi.bautur.store.repository.TransactionManager;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceTest {
@@ -42,7 +41,7 @@ class InventoryServiceTest {
 
 		when(repositoryProvider.getProductRepository()).thenReturn(productRepository);
 
-		when(transactionManager.doInTransaction(org.mockito.ArgumentMatchers.any())).thenAnswer(invocation -> {
+		when(transactionManager.doInTransaction(any())).thenAnswer(invocation -> {
 			TransactionCode<?> code = invocation.getArgument(0);
 			return code.apply(repositoryProvider);
 		});
@@ -98,5 +97,12 @@ class InventoryServiceTest {
 	    service.deleteProduct(1L);
 
 	    verify(productRepository).deleteById(1L);
+	}
+	
+	@Test
+	void addProductShouldThrowWhenProductIsNull() {
+	    assertThatThrownBy(() -> service.addProduct(null))
+	            .isInstanceOf(IllegalArgumentException.class)
+	            .hasMessage("Product cannot be null");
 	}
 }
