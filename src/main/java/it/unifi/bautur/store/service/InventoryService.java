@@ -49,11 +49,13 @@ public class InventoryService {
 	    transactionManager.doInTransaction(provider -> {
 	        Product product = provider.getProductRepository()
 	                .findById(productId)
-	                .orElseThrow();
+	                .orElseThrow(() ->
+	                        new IllegalArgumentException("Product not found"));
 
 	        Category category = provider.getCategoryRepository()
 	                .findById(categoryId)
-	                .orElseThrow();
+	                .orElseThrow(() ->
+	                        new IllegalArgumentException("Category not found"));
 
 	        product.setCategory(category);
 
@@ -61,5 +63,11 @@ public class InventoryService {
 
 	        return null;
 	    });
+	}
+	
+	public List<Category> getAllCategories() {
+	    return transactionManager.doInTransaction(
+	            provider -> provider.getCategoryRepository().findAll()
+	    );
 	}
 }

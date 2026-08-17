@@ -3,11 +3,12 @@ package it.unifi.bautur.store.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,17 +17,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import it.unifi.bautur.store.model.Category;
 import it.unifi.bautur.store.model.Product;
+import it.unifi.bautur.store.repository.CategoryRepository;
 import it.unifi.bautur.store.repository.ProductRepository;
 import it.unifi.bautur.store.repository.RepositoryProvider;
 import it.unifi.bautur.store.repository.TransactionCode;
 import it.unifi.bautur.store.repository.TransactionManager;
-
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-
-import it.unifi.bautur.store.model.Category;
-import it.unifi.bautur.store.repository.CategoryRepository;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceTest {
@@ -51,17 +48,27 @@ class InventoryServiceTest {
 	}
 
 	private void setUpTransaction() {
-		when(repositoryProvider.getProductRepository()).thenReturn(productRepository);
-
 		when(transactionManager.doInTransaction(any())).thenAnswer(invocation -> {
 			TransactionCode<?> code = invocation.getArgument(0);
 			return code.apply(repositoryProvider);
 		});
 	}
 
+	private void setUpProductTransaction() {
+		setUpTransaction();
+
+		when(repositoryProvider.getProductRepository()).thenReturn(productRepository);
+	}
+
+	private void setUpCategoryTransaction() {
+		setUpTransaction();
+
+		when(repositoryProvider.getCategoryRepository()).thenReturn(categoryRepository);
+	}
+
 	@Test
 	void getAllProductsShouldReturnAllProducts() {
-		setUpTransaction();
+		setUpProductTransaction();
 
 		Product laptop = new Product("Laptop", 1200.50);
 		Product phone = new Product("Phone", 800.00);
@@ -77,7 +84,7 @@ class InventoryServiceTest {
 
 	@Test
 	void addProductShouldSaveProduct() {
-		setUpTransaction();
+		setUpProductTransaction();
 
 		Product product = new Product("Laptop", 1200.50);
 
@@ -88,7 +95,7 @@ class InventoryServiceTest {
 
 	@Test
 	void getProductByIdShouldReturnProduct() {
-		setUpTransaction();
+		setUpProductTransaction();
 
 		Product product = new Product("Laptop", 1200.50);
 
@@ -101,7 +108,7 @@ class InventoryServiceTest {
 
 	@Test
 	void getProductByIdShouldReturnEmptyWhenProductDoesNotExist() {
-		setUpTransaction();
+		setUpProductTransaction();
 
 		when(productRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -112,7 +119,7 @@ class InventoryServiceTest {
 
 	@Test
 	void deleteProductShouldDeleteProductById() {
-		setUpTransaction();
+		setUpProductTransaction();
 
 		service.deleteProduct(1L);
 
@@ -133,7 +140,7 @@ class InventoryServiceTest {
 
 	@Test
 	void assignCategoryToProductShouldAssignCategoryAndSaveProduct() {
-		setUpTransaction();
+		setUpProductTransaction();
 
 		Product product = new Product("Laptop", 1200.50);
 		Category category = new Category("Electronics");
@@ -147,62 +154,54 @@ class InventoryServiceTest {
 		service.assignCategoryToProduct(1L, 2L);
 
 		assertThat(product.getCategory()).isEqualTo(category);
-		verify(productRepository).save(product);
 
+		verify(productRepository).save(product);
 		verify(transactionManager, times(1)).doInTransaction(any());
 	}
-	
+
 	@Test
 	void assignCategoryToProductShouldThrowWhenProductDoesNotExist() {
-	    setUpTransaction();
+		setUpProductTransaction();
 
-	    when(productRepository.findById(1L))
-	            .thenReturn(Optional.empty());
+		when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
-	    assertThatThrownBy(() -> service.assignCategoryToProduct(1L, 2L))
-	            .isInstanceOf(NoSuchElementException.class);
+		assertThatThrownBy(() -> service.assignCategoryToProduct(1L, 2L)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Product not found");
 
-	    verify(categoryRepository, never()).findById(any());
+		verify(categoryRepository, never()).findById(any());
 	}
-	
+
 	@Test
 	void assignCategoryToProductShouldThrowWhenCategoryDoesNotExist() {
-	    setUpTransaction();
+		setUpProductTransaction();
 
-	    Product product = new Product("Laptop", 1200.50);
+		Product product = new Product("Laptop", 1200.50);
 
-	    when(repositoryProvider.getCategoryRepository())
-	            .thenReturn(categoryRepository);
+		when(repositoryProvider.getCategoryRepository()).thenReturn(categoryRepository);
 
-	    when(productRepository.findById(1L))
-	            .thenReturn(Optional.of(product));
+		when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
-	    when(categoryRepository.findById(99L))
-	            .thenReturn(Optional.empty());
+		when(categoryRepository.findById(99L)).thenReturn(Optional.empty());
 
-	    assertThatThrownBy(() -> service.assignCategoryToProduct(1L, 99L))
-	            .isInstanceOf(NoSuchElementException.class);
+		assertThatThrownBy(() -> service.assignCategoryToProduct(1L, 99L)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Category not found");
 
-	    verify(productRepository, never()).save(any());
+		verify(productRepository, never()).save(any());
 	}
-	
+
 	@Test
 	void getAllCategoriesShouldReturnAllCategories() {
-	    setUpTransaction();
+		setUpCategoryTransaction();
 
-	    Category electronics = new Category("Electronics");
-	    Category books = new Category("Books");
+		Category electronics = new Category("Electronics");
+		Category books = new Category("Books");
 
-	    List<Category> categories = List.of(electronics, books);
+		List<Category> categories = List.of(electronics, books);
 
-	    when(repositoryProvider.getCategoryRepository())
-	            .thenReturn(categoryRepository);
+		when(categoryRepository.findAll()).thenReturn(categories);
 
-	    when(categoryRepository.findAll())
-	            .thenReturn(categories);
+		List<Category> result = service.getAllCategories();
 
-	    List<Category> result = service.getAllCategories();
-
-	    assertThat(result).isEqualTo(categories);
+		assertThat(result).isEqualTo(categories);
 	}
 }
