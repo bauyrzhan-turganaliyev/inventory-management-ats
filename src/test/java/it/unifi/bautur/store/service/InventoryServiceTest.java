@@ -164,4 +164,25 @@ class InventoryServiceTest {
 
 	    verify(categoryRepository, never()).findById(any());
 	}
+	
+	@Test
+	void assignCategoryToProductShouldThrowWhenCategoryDoesNotExist() {
+	    setUpTransaction();
+
+	    Product product = new Product("Laptop", 1200.50);
+
+	    when(repositoryProvider.getCategoryRepository())
+	            .thenReturn(categoryRepository);
+
+	    when(productRepository.findById(1L))
+	            .thenReturn(Optional.of(product));
+
+	    when(categoryRepository.findById(99L))
+	            .thenReturn(Optional.empty());
+
+	    assertThatThrownBy(() -> service.assignCategoryToProduct(1L, 99L))
+	            .isInstanceOf(NoSuchElementException.class);
+
+	    verify(productRepository, never()).save(any());
+	}
 }
