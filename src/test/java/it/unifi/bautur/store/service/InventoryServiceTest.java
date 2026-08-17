@@ -185,4 +185,24 @@ class InventoryServiceTest {
 
 	    verify(productRepository, never()).save(any());
 	}
+	
+	@Test
+	void getAllCategoriesShouldReturnAllCategories() {
+	    setUpTransaction();
+
+	    Category electronics = new Category("Electronics");
+	    Category books = new Category("Books");
+
+	    List<Category> categories = List.of(electronics, books);
+
+	    when(repositoryProvider.getCategoryRepository())
+	            .thenReturn(categoryRepository);
+
+	    when(categoryRepository.findAll())
+	            .thenReturn(categories);
+
+	    List<Category> result = service.getAllCategories();
+
+	    assertThat(result).isEqualTo(categories);
+	}
 }
