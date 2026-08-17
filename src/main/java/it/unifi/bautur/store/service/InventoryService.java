@@ -19,6 +19,10 @@ public class InventoryService {
 	}
 
 	public void addProduct(Product product) {
+		if (product == null) {
+			throw new IllegalArgumentException("Product cannot be null");
+		}
+
 		transactionManager.doInTransaction(provider -> {
 			provider.getProductRepository().save(product);
 			return null;

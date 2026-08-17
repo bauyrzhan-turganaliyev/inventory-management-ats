@@ -37,18 +37,25 @@ class InventoryServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		service = new InventoryService(transactionManager);
+	    service = new InventoryService(transactionManager);
+	}
+	
+	private void setUpTransaction() {
+	    when(repositoryProvider.getProductRepository())
+	            .thenReturn(productRepository);
 
-		when(repositoryProvider.getProductRepository()).thenReturn(productRepository);
-
-		when(transactionManager.doInTransaction(any())).thenAnswer(invocation -> {
-			TransactionCode<?> code = invocation.getArgument(0);
-			return code.apply(repositoryProvider);
-		});
+	    when(transactionManager.doInTransaction(
+	            any()))
+	            .thenAnswer(invocation -> {
+	                TransactionCode<?> code = invocation.getArgument(0);
+	                return code.apply(repositoryProvider);
+	            });
 	}
 	
 	@Test
 	void getAllProductsShouldReturnAllProducts() {
+	    setUpTransaction();
+
 	    Product laptop = new Product("Laptop", 1200.50);
 	    Product phone = new Product("Phone", 800.00);
 
@@ -63,6 +70,8 @@ class InventoryServiceTest {
 	
 	@Test
 	void addProductShouldSaveProduct() {
+	    setUpTransaction();
+
 	    Product product = new Product("Laptop", 1200.50);
 
 	    service.addProduct(product);
@@ -72,6 +81,8 @@ class InventoryServiceTest {
 	
 	@Test
 	void getProductByIdShouldReturnProduct() {
+	    setUpTransaction();
+
 	    Product product = new Product("Laptop", 1200.50);
 
 	    when(productRepository.findById(1L))
@@ -84,6 +95,8 @@ class InventoryServiceTest {
 	
 	@Test
 	void getProductByIdShouldReturnEmptyWhenProductDoesNotExist() {
+	    setUpTransaction();
+
 	    when(productRepository.findById(99L))
 	            .thenReturn(Optional.empty());
 
@@ -91,9 +104,11 @@ class InventoryServiceTest {
 
 	    assertThat(result).isEmpty();
 	}
-	
+
 	@Test
 	void deleteProductShouldDeleteProductById() {
+	    setUpTransaction();
+
 	    service.deleteProduct(1L);
 
 	    verify(productRepository).deleteById(1L);
