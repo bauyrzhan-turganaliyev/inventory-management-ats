@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import it.unifi.bautur.store.repository.RepositoryProvider;
 import it.unifi.bautur.store.repository.TransactionCode;
 import it.unifi.bautur.store.repository.TransactionManager;
 
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import it.unifi.bautur.store.model.Category;
@@ -148,5 +150,18 @@ class InventoryServiceTest {
 		verify(productRepository).save(product);
 
 		verify(transactionManager, times(1)).doInTransaction(any());
+	}
+	
+	@Test
+	void assignCategoryToProductShouldThrowWhenProductDoesNotExist() {
+	    setUpTransaction();
+
+	    when(productRepository.findById(1L))
+	            .thenReturn(Optional.empty());
+
+	    assertThatThrownBy(() -> service.assignCategoryToProduct(1L, 2L))
+	            .isInstanceOf(NoSuchElementException.class);
+
+	    verify(categoryRepository, never()).findById(any());
 	}
 }
