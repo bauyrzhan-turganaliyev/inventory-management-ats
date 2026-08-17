@@ -34,9 +34,13 @@ public class InventoryService {
 	}
 
 	public void deleteProduct(Long id) {
-		transactionManager.doInTransaction(provider -> {
-			provider.getProductRepository().deleteById(id);
-			return null;
-		});
+	    if (id == null) {
+	        throw new IllegalArgumentException("Product id cannot be null");
+	    }
+
+	    transactionManager.doInTransaction(provider -> {
+	        provider.getProductRepository().deleteById(id);
+	        return null;
+	    });
 	}
 }
