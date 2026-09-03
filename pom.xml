@@ -1,7 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
 	<modelVersion>4.0.0</modelVersion>
+
 	<groupId>it.unifi.bautur.store</groupId>
 	<artifactId>inventory-management-ats</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
@@ -10,66 +12,84 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>17</maven.compiler.release>
+
 		<junit.version>5.10.2</junit.version>
 		<assertj.version>3.25.3</assertj.version>
+		<mockito.version>5.11.0</mockito.version>
+
+		<hibernate.version>6.4.4.Final</hibernate.version>
+		<jakarta.persistence.version>3.1.0</jakarta.persistence.version>
+		<postgresql.version>42.7.3</postgresql.version>
+		<testcontainers.version>1.19.7</testcontainers.version>
 
 		<sonar.projectKey>bauyrzhan-turganaliyev_inventory-management-ats</sonar.projectKey>
 		<sonar.organization>bauyrzhan-turganaliyev</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
-		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-		<mockito.version>5.11.0</mockito.version>
+		<sonar.coverage.jacoco.xmlReportPaths>
+			target/site/jacoco/jacoco.xml
+		</sonar.coverage.jacoco.xmlReportPaths>
 	</properties>
 
 	<dependencies>
+
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
 			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
 			<version>${assertj.version}</version>
 			<scope>test</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-junit-jupiter</artifactId>
 			<version>${mockito.version}</version>
 			<scope>test</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>jakarta.persistence</groupId>
 			<artifactId>jakarta.persistence-api</artifactId>
-			<version>3.1.0</version>
+			<version>${jakarta.persistence.version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.hibernate.orm</groupId>
 			<artifactId>hibernate-core</artifactId>
-			<version>6.4.4.Final</version>
+			<version>${hibernate.version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>42.7.3</version>
+			<version>${postgresql.version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>1.19.7</version>
+			<version>${testcontainers.version}</version>
 			<scope>test</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<version>1.19.7</version>
+			<version>${testcontainers.version}</version>
 			<scope>test</scope>
 		</dependency>
+
 	</dependencies>
 
 	<build>
 		<plugins>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
@@ -80,6 +100,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>3.2.5</version>
+
 				<executions>
 					<execution>
 						<goals>
@@ -94,26 +115,29 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.11</version>
+
 				<executions>
 					<execution>
 						<goals>
 							<goal>prepare-agent</goal>
 						</goals>
 					</execution>
+
 					<execution>
 						<id>report</id>
 						<phase>verify</phase>
+
 						<goals>
 							<goal>report</goal>
 						</goals>
 					</execution>
 				</executions>
 			</plugin>
-
 			<plugin>
 				<groupId>org.pitest</groupId>
 				<artifactId>pitest-maven</artifactId>
 				<version>1.15.8</version>
+
 				<dependencies>
 					<dependency>
 						<groupId>org.pitest</groupId>
@@ -121,22 +145,25 @@
 						<version>1.2.1</version>
 					</dependency>
 				</dependencies>
+
 				<configuration>
 					<targetClasses>
 						<param>it.unifi.bautur.store.model.*</param>
 						<param>it.unifi.bautur.store.service.*</param>
 					</targetClasses>
+
 					<targetTests>
 						<param>it.unifi.bautur.store.*Test</param>
 					</targetTests>
+
 					<mutationThreshold>100</mutationThreshold>
 				</configuration>
 			</plugin>
-
 			<plugin>
 				<groupId>org.eluder.coveralls</groupId>
 				<artifactId>coveralls-maven-plugin</artifactId>
 				<version>4.3.0</version>
+
 				<dependencies>
 					<dependency>
 						<groupId>javax.xml.bind</groupId>
@@ -145,12 +172,13 @@
 					</dependency>
 				</dependencies>
 			</plugin>
-
 			<plugin>
 				<groupId>org.sonarsource.scanner.maven</groupId>
 				<artifactId>sonar-maven-plugin</artifactId>
 				<version>3.11.0.3922</version>
 			</plugin>
+
 		</plugins>
 	</build>
+
 </project>
