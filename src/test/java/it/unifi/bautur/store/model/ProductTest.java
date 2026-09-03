@@ -56,4 +56,10 @@ class ProductTest {
 
 		assertThat(product.getCategory()).isNull();
 	}
+	@Test
+	void testProductShouldHaveNoId() {
+	    Product product = new Product("Laptop", 1200.50);
+
+	    assertThat(product.getId()).isNull();
+	}
 }

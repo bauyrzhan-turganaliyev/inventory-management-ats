@@ -13,7 +13,7 @@ class CategoryTest {
 
 		assertThat(category.getName()).isEqualTo("Electronics");
 	}
-	
+
 	@Test
 	void testCategoryWithEmptyNameShouldThrow() {
 		assertThatThrownBy(() -> new Category("")).isInstanceOf(IllegalArgumentException.class)
@@ -24,5 +24,12 @@ class CategoryTest {
 	void testCategoryWithNullNameShouldThrow() {
 		assertThatThrownBy(() -> new Category(null)).isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("Category name cannot be null");
+	}
+
+	@Test
+	void testCategoryShouldHaveNoId() {
+		Category category = new Category("Electronics");
+
+		assertThat(category.getId()).isNull();
 	}
 }
