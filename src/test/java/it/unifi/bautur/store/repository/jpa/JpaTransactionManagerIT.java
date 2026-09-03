@@ -3,45 +3,40 @@ package it.unifi.bautur.store.repository.jpa;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.Map;
-
-import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import it.unifi.bautur.store.model.Product;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 
-@Testcontainers
-class JpaTransactionManagerIT {
+class JpaTransactionManagerIT extends AbstractJpaIT {
 
-	@Container
-	private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
-
-	private static EntityManagerFactory entityManagerFactory;
 	private static JpaTransactionManager transactionManager;
 
 	@BeforeAll
-	static void setUp() {
-		Map<String, Object> properties = Map.of("jakarta.persistence.jdbc.url", POSTGRES.getJdbcUrl(),
-				"jakarta.persistence.jdbc.user", POSTGRES.getUsername(), "jakarta.persistence.jdbc.password",
-				POSTGRES.getPassword(), "jakarta.persistence.jdbc.driver", "org.postgresql.Driver",
-				"hibernate.hbm2ddl.auto", "create-drop");
-
-		entityManagerFactory = Persistence.createEntityManagerFactory("inventory-pu", properties);
-
-		transactionManager = new JpaTransactionManager(entityManagerFactory);
+	static void createTransactionManager() {
+		transactionManager = new JpaTransactionManager(ENTITY_MANAGER_FACTORY);
 	}
 
-	@AfterAll
-	static void tearDown() {
-		if (entityManagerFactory != null) {
-			entityManagerFactory.close();
+	@AfterEach
+	void cleanDatabase() {
+		EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
+
+		try {
+			entityManager.getTransaction().begin();
+
+			entityManager.createQuery("DELETE FROM Product").executeUpdate();
+
+			entityManager.createQuery("DELETE FROM Category").executeUpdate();
+
+			entityManager.getTransaction().commit();
+		} finally {
+			if (entityManager.getTransaction().isActive()) {
+				entityManager.getTransaction().rollback();
+			}
+
+			entityManager.close();
 		}
 	}
 
@@ -55,7 +50,7 @@ class JpaTransactionManagerIT {
 			return saved.getId();
 		});
 
-		EntityManager entityManager = entityManagerFactory.createEntityManager();
+		EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
 
 		try {
 			Product found = entityManager.find(Product.class, productId);
@@ -75,7 +70,7 @@ class JpaTransactionManagerIT {
 			throw new IllegalStateException("Something went wrong");
 		})).isInstanceOf(IllegalStateException.class).hasMessage("Something went wrong");
 
-		EntityManager entityManager = entityManagerFactory.createEntityManager();
+		EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
 
 		try {
 			Long count = entityManager.createQuery("""

@@ -3,58 +3,22 @@ package it.unifi.bautur.store.repository.jpa;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.Map;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import it.unifi.bautur.store.model.Product;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 
-@Testcontainers
-class ProductJpaRepositoryIT {
-
-	@Container
-	private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
-
-	private static EntityManagerFactory entityManagerFactory;
+class ProductJpaRepositoryIT extends AbstractJpaIT {
 
 	private EntityManager entityManager;
 	private ProductJpaRepository repository;
 
-	@BeforeAll
-	static void createEntityManagerFactory() {
-		Map<String, Object> properties = Map.of("jakarta.persistence.jdbc.url", POSTGRES.getJdbcUrl(),
-
-				"jakarta.persistence.jdbc.user", POSTGRES.getUsername(),
-
-				"jakarta.persistence.jdbc.password", POSTGRES.getPassword(),
-
-				"jakarta.persistence.jdbc.driver", "org.postgresql.Driver",
-
-				"hibernate.hbm2ddl.auto", "create-drop");
-
-		entityManagerFactory = Persistence.createEntityManagerFactory("inventory-pu", properties);
-	}
-
-	@AfterAll
-	static void closeEntityManagerFactory() {
-		if (entityManagerFactory != null) {
-			entityManagerFactory.close();
-		}
-	}
-
 	@BeforeEach
 	void setUp() {
-		entityManager = entityManagerFactory.createEntityManager();
+		entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
 		repository = new ProductJpaRepository(entityManager);
 
 		entityManager.getTransaction().begin();
@@ -93,7 +57,6 @@ class ProductJpaRepositoryIT {
 
 		entityManager.persist(product);
 		entityManager.flush();
-
 		entityManager.clear();
 
 		assertThat(repository.findById(product.getId())).isPresent().get().satisfies(found -> {
@@ -139,7 +102,6 @@ class ProductJpaRepositoryIT {
 		entityManager.clear();
 
 		assertThat(merged).isNotSameAs(product);
-
 		assertThat(merged.getId()).isEqualTo(id);
 
 		Product found = entityManager.find(Product.class, id);
