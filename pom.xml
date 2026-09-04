@@ -85,6 +85,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-swing-junit</artifactId>
+			<version>3.17.1</version>
+			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -132,6 +139,12 @@
 						</goals>
 					</execution>
 				</executions>
+
+				<configuration>
+					<excludes>
+						<exclude>it/unifi/bautur/store/Main.class</exclude>
+					</excludes>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.pitest</groupId>
@@ -150,6 +163,7 @@
 					<targetClasses>
 						<param>it.unifi.bautur.store.model.*</param>
 						<param>it.unifi.bautur.store.service.*</param>
+						<param>it.unifi.bautur.store.view.InventoryPresenter</param>
 					</targetClasses>
 
 					<targetTests>
