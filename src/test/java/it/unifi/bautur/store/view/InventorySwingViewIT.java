@@ -1,17 +1,20 @@
 package it.unifi.bautur.store.view;
-import java.lang.reflect.Field;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import java.lang.reflect.Field;
 import java.util.List;
+
+import javax.swing.SwingUtilities;
 
 import org.assertj.swing.core.BasicRobot;
 import org.assertj.swing.core.Robot;
 import org.assertj.swing.data.TableCell;
 import org.assertj.swing.edt.GuiActionRunner;
 import org.assertj.swing.fixture.FrameFixture;
+import org.assertj.swing.timing.Timeout;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,10 +24,14 @@ import it.unifi.bautur.store.model.Product;
 
 class InventorySwingViewIT {
 
+	private static final Timeout DIALOG_TIMEOUT = Timeout.timeout(5000);
+
 	private Robot robot;
+
 	private FrameFixture window;
 
 	private InventorySwingView view;
+
 	private InventoryPresenter presenter;
 
 	@BeforeEach
@@ -68,7 +75,7 @@ class InventorySwingViewIT {
 
 		GuiActionRunner.execute(() -> view.showProducts(List.of(product)));
 
-		window.table("productTable").selectRows(0);
+		GuiActionRunner.execute(() -> window.table("productTable").target().setRowSelectionInterval(0, 0));
 
 		window.button("deleteProductButton").click();
 
@@ -90,7 +97,7 @@ class InventorySwingViewIT {
 			view.showCategories(List.of(category));
 		});
 
-		window.table("productTable").selectRows(0);
+		GuiActionRunner.execute(() -> window.table("productTable").target().setRowSelectionInterval(0, 0));
 
 		window.comboBox("categoryComboBox").selectItem("Electronics");
 
@@ -159,29 +166,31 @@ class InventorySwingViewIT {
 
 	@Test
 	void shouldShowErrorWhenDeletingWithoutSelectedProduct() {
-		window.button("deleteProductButton").click();
+		clickAsync("deleteProductButton");
 
-		window.dialog().requireVisible().optionPane().requireErrorMessage().requireMessage("Please select a product")
-				.okButton().click();
+		window.dialog(DIALOG_TIMEOUT).requireVisible().optionPane().requireErrorMessage()
+				.requireMessage("Please select a product").okButton().click();
 	}
 
 	@Test
 	void shouldShowErrorWhenAssigningCategoryWithoutSelectedProduct() {
-		window.button("assignCategoryButton").click();
+		clickAsync("assignCategoryButton");
 
-		window.dialog().requireVisible().optionPane().requireErrorMessage().requireMessage("Please select a product")
-				.okButton().click();
+		window.dialog(DIALOG_TIMEOUT).requireVisible().optionPane().requireErrorMessage()
+				.requireMessage("Please select a product").okButton().click();
 	}
 
 	@Test
 	void shouldShowErrorWhenPriceIsInvalid() {
-		window.textBox("productNameField").enterText("Laptop");
+		GuiActionRunner.execute(() -> {
+			window.textBox("productNameField").target().setText("Laptop");
 
-		window.textBox("productPriceField").enterText("not-a-number");
+			window.textBox("productPriceField").target().setText("not-a-number");
+		});
 
-		window.button("addProductButton").click();
+		clickAsync("addProductButton");
 
-		window.dialog().requireVisible().optionPane().requireErrorMessage()
+		window.dialog(DIALOG_TIMEOUT).requireVisible().optionPane().requireErrorMessage()
 				.requireMessage("Price must be a valid number").okButton().click();
 	}
 
@@ -193,12 +202,16 @@ class InventorySwingViewIT {
 
 		GuiActionRunner.execute(() -> view.showProducts(List.of(product)));
 
-		window.table("productTable").selectRows(0);
+		GuiActionRunner.execute(() -> window.table("productTable").target().setRowSelectionInterval(0, 0));
 
-		window.button("assignCategoryButton").click();
+		clickAsync("assignCategoryButton");
 
-		window.dialog().requireVisible().optionPane().requireErrorMessage().requireMessage("Please select a category")
-				.okButton().click();
+		window.dialog(DIALOG_TIMEOUT).requireVisible().optionPane().requireErrorMessage()
+				.requireMessage("Please select a category").okButton().click();
+	}
+
+	private void clickAsync(String buttonName) {
+		SwingUtilities.invokeLater(() -> window.button(buttonName).target().doClick());
 	}
 
 	private static void setId(Object entity, Long id) {
@@ -206,6 +219,7 @@ class InventorySwingViewIT {
 			Field idField = entity.getClass().getDeclaredField("id");
 
 			idField.setAccessible(true);
+
 			idField.set(entity, id);
 		} catch (ReflectiveOperationException exception) {
 			throw new IllegalStateException("Cannot set entity id for GUI test", exception);
