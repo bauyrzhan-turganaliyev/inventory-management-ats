@@ -25,6 +25,7 @@ import it.unifi.bautur.store.model.Product;
 public class InventorySwingView extends JFrame implements InventoryView {
 
 	private static final long serialVersionUID = 1L;
+	private static final String SELECT_PRODUCT_ERROR = "Please select a product";
 
 	private final DefaultTableModel productTableModel;
 	private final JTable productTable;
@@ -205,7 +206,7 @@ public class InventorySwingView extends JFrame implements InventoryView {
 		Long productId = getSelectedProductId();
 
 		if (productId == null) {
-			showError("Please select a product");
+			showError(SELECT_PRODUCT_ERROR);
 
 			return;
 		}
@@ -217,7 +218,7 @@ public class InventorySwingView extends JFrame implements InventoryView {
 		Long productId = getSelectedProductId();
 
 		if (productId == null) {
-			showError("Please select a product");
+			showError(SELECT_PRODUCT_ERROR);
 
 			return;
 		}
@@ -235,7 +236,7 @@ public class InventorySwingView extends JFrame implements InventoryView {
 		Long productId = getSelectedProductId();
 
 		if (productId == null) {
-			showError("Please select a product");
+			showError(SELECT_PRODUCT_ERROR);
 
 			return;
 		}

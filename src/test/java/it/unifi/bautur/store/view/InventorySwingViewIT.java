@@ -1,6 +1,7 @@
 package it.unifi.bautur.store.view;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -18,6 +19,9 @@ import org.assertj.swing.timing.Timeout;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import it.unifi.bautur.store.model.Category;
 import it.unifi.bautur.store.model.Product;
@@ -193,28 +197,6 @@ class InventorySwingViewIT {
 	}
 
 	@Test
-	void shouldShowErrorWhenDeletingWithoutSelectedProduct() {
-		clickAsync("deleteProductButton");
-
-		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
-
-		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Please select a product");
-
-		dialog.optionPane().okButton().click();
-	}
-
-	@Test
-	void shouldShowErrorWhenUpdatingStockWithoutSelectedProduct() {
-		clickAsync("updateStockButton");
-
-		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
-
-		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Please select a product");
-
-		dialog.optionPane().okButton().click();
-	}
-
-	@Test
 	void shouldShowErrorWhenStockQuantityIsInvalid() {
 		Product product = new Product("Laptop", 5, 1200.50);
 
@@ -237,9 +219,11 @@ class InventorySwingViewIT {
 		dialog.optionPane().okButton().click();
 	}
 
-	@Test
-	void shouldShowErrorWhenAssigningCategoryWithoutSelectedProduct() {
-		clickAsync("assignCategoryButton");
+	@ParameterizedTest
+	@ValueSource(strings = { "deleteProductButton", "updateStockButton", "assignCategoryButton" })
+	void shouldShowErrorWhenActionRequiresSelectedProduct(String buttonName) {
+
+		clickAsync(buttonName);
 
 		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
 
