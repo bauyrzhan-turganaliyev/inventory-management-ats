@@ -218,11 +218,11 @@ class InventoryE2EIT extends AbstractJpaIT {
 
 		GuiActionRunner.execute(() -> presenter.loadProducts());
 
-		window.table("productTable").requireRowCount(2);
+		assertThat(window.table("productTable").rowCount()).isEqualTo(2);
 
-		window.table("productTable").requireCellValue(TableCell.row(0).column(1), "Laptop");
+		assertThat(window.table("productTable").valueAt(TableCell.row(0).column(1))).isEqualTo("Laptop");
 
-		window.table("productTable").requireCellValue(TableCell.row(1).column(1), "Phone");
+		assertThat(window.table("productTable").valueAt(TableCell.row(1).column(1))).isEqualTo("Phone");
 	}
 
 	private void cleanDatabase() {
