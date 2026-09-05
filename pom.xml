@@ -28,6 +28,16 @@
 		<sonar.coverage.jacoco.xmlReportPaths>
 			target/site/jacoco/jacoco.xml
 		</sonar.coverage.jacoco.xmlReportPaths>
+
+		<!--
+		    Main is the application composition root. It only configures the
+		    persistence environment, wires production dependencies and starts
+		    the Swing application. Business behaviour is tested independently
+		    through unit, integration and end-to-end tests.
+		-->
+		<sonar.coverage.exclusions>
+			**/Main.java
+		</sonar.coverage.exclusions>
 	</properties>
 
 	<dependencies>
