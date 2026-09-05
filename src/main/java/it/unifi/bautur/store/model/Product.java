@@ -16,6 +16,8 @@ public class Product {
 
 	private String name;
 
+	private int quantity;
+
 	private double price;
 
 	@ManyToOne
@@ -28,18 +30,27 @@ public class Product {
 	}
 
 	public Product(String name, double price) {
-		validate(name, price);
+		this(name, 0, price);
+	}
+
+	public Product(String name, int quantity, double price) {
+		validate(name, quantity, price);
 		this.name = name;
+		this.quantity = quantity;
 		this.price = price;
 	}
 
-	private void validate(String name, double price) {
+	private void validate(String name, int quantity, double price) {
 		if (name == null) {
 			throw new IllegalArgumentException("Product name cannot be null");
 		}
 
 		if (name.trim().isEmpty()) {
 			throw new IllegalArgumentException("Product name cannot be empty");
+		}
+
+		if (quantity < 0) {
+			throw new IllegalArgumentException("Product quantity cannot be negative");
 		}
 
 		if (price < 0) {
@@ -55,12 +66,24 @@ public class Product {
 		return name;
 	}
 
+	public int getQuantity() {
+		return quantity;
+	}
+
 	public double getPrice() {
 		return price;
 	}
 
 	public Category getCategory() {
 		return category;
+	}
+
+	public void setQuantity(int quantity) {
+		if (quantity < 0) {
+			throw new IllegalArgumentException("Product quantity cannot be negative");
+		}
+
+		this.quantity = quantity;
 	}
 
 	public void setCategory(Category category) {

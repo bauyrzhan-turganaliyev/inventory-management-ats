@@ -64,6 +64,8 @@ class InventoryE2EIT extends AbstractJpaIT {
 	void shouldAddProductEndToEnd() {
 		window.textBox("productNameField").enterText("Laptop");
 
+		window.textBox("productQuantityField").enterText("5");
+
 		window.textBox("productPriceField").enterText("1200.50");
 
 		window.button("addProductButton").click();
@@ -72,7 +74,9 @@ class InventoryE2EIT extends AbstractJpaIT {
 
 		window.table("productTable").requireCellValue(TableCell.row(0).column(1), "Laptop");
 
-		window.table("productTable").requireCellValue(TableCell.row(0).column(2), "1200.5");
+		window.table("productTable").requireCellValue(TableCell.row(0).column(2), "5");
+
+		window.table("productTable").requireCellValue(TableCell.row(0).column(3), "1200.5");
 
 		EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
 
@@ -88,6 +92,8 @@ class InventoryE2EIT extends AbstractJpaIT {
 
 			assertThat(product.getName()).isEqualTo("Laptop");
 
+			assertThat(product.getQuantity()).isEqualTo(5);
+
 			assertThat(product.getPrice()).isEqualTo(1200.50);
 		} finally {
 			entityManager.close();
@@ -96,7 +102,7 @@ class InventoryE2EIT extends AbstractJpaIT {
 
 	@Test
 	void shouldDeleteProductEndToEnd() {
-		Product product = new Product("Laptop", 1200.50);
+		Product product = new Product("Laptop", 5, 1200.50);
 
 		transactionManager.doInTransaction(repositories -> {
 			repositories.getProductRepository().save(product);
@@ -132,8 +138,7 @@ class InventoryE2EIT extends AbstractJpaIT {
 
 	@Test
 	void shouldAssignCategoryToProductEndToEnd() {
-
-		Product product = new Product("Laptop", 1200.50);
+		Product product = new Product("Laptop", 5, 1200.50);
 
 		Category category = new Category("Electronics");
 
@@ -183,7 +188,9 @@ class InventoryE2EIT extends AbstractJpaIT {
 
 		window.button("assignCategoryButton").click();
 
-		window.table("productTable").requireCellValue(TableCell.row(0).column(3), "Electronics");
+		// Category is now column 4 because quantity
+		// was added before price/category.
+		window.table("productTable").requireCellValue(TableCell.row(0).column(4), "Electronics");
 
 		EntityManager verificationEntityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
 
@@ -203,10 +210,49 @@ class InventoryE2EIT extends AbstractJpaIT {
 	}
 
 	@Test
-	void shouldDisplayExistingProductsEndToEnd() {
-		Product laptop = new Product("Laptop", 1200.50);
+	void shouldUpdateProductStockEndToEnd() {
+		Product product = new Product("Laptop", 5, 1200.50);
 
-		Product phone = new Product("Phone", 800.00);
+		transactionManager.doInTransaction(repositories -> {
+			repositories.getProductRepository().save(product);
+
+			return null;
+		});
+
+		assertThat(product.getId()).isNotNull();
+
+		GuiActionRunner.execute(() -> presenter.loadProducts());
+
+		window.table("productTable").requireRowCount(1);
+
+		window.table("productTable").requireCellValue(TableCell.row(0).column(2), "5");
+
+		GuiActionRunner.execute(() -> window.table("productTable").target().setRowSelectionInterval(0, 0));
+
+		window.textBox("stockQuantityField").enterText("10");
+
+		window.button("updateStockButton").click();
+
+		window.table("productTable").requireCellValue(TableCell.row(0).column(2), "10");
+
+		EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
+
+		try {
+			Product storedProduct = entityManager.find(Product.class, product.getId());
+
+			assertThat(storedProduct).isNotNull();
+
+			assertThat(storedProduct.getQuantity()).isEqualTo(10);
+		} finally {
+			entityManager.close();
+		}
+	}
+
+	@Test
+	void shouldDisplayExistingProductsEndToEnd() {
+		Product laptop = new Product("Laptop", 5, 1200.50);
+
+		Product phone = new Product("Phone", 10, 800.00);
 
 		transactionManager.doInTransaction(repositories -> {
 			repositories.getProductRepository().save(laptop);
@@ -222,7 +268,11 @@ class InventoryE2EIT extends AbstractJpaIT {
 
 		assertThat(window.table("productTable").valueAt(TableCell.row(0).column(1))).isEqualTo("Laptop");
 
+		assertThat(window.table("productTable").valueAt(TableCell.row(0).column(2))).isEqualTo("5");
+
 		assertThat(window.table("productTable").valueAt(TableCell.row(1).column(1))).isEqualTo("Phone");
+
+		assertThat(window.table("productTable").valueAt(TableCell.row(1).column(2))).isEqualTo("10");
 	}
 
 	private void cleanDatabase() {

@@ -9,6 +9,7 @@ import it.unifi.bautur.store.service.InventoryService;
 public class InventoryPresenter {
 
 	private final InventoryView view;
+
 	private final InventoryService service;
 
 	public InventoryPresenter(InventoryView view, InventoryService service) {
@@ -36,9 +37,9 @@ public class InventoryPresenter {
 		}
 	}
 
-	public void addProduct(String name, double price) {
+	public void addProduct(String name, int quantity, double price) {
 		try {
-			Product product = new Product(name, price);
+			Product product = new Product(name, quantity, price);
 
 			service.addProduct(product);
 
@@ -51,6 +52,16 @@ public class InventoryPresenter {
 	public void deleteProduct(Long productId) {
 		try {
 			service.deleteProduct(productId);
+
+			loadProducts();
+		} catch (RuntimeException exception) {
+			showError(exception);
+		}
+	}
+
+	public void updateProductStock(Long productId, int quantity) {
+		try {
+			service.updateProductStock(productId, quantity);
 
 			loadProducts();
 		} catch (RuntimeException exception) {

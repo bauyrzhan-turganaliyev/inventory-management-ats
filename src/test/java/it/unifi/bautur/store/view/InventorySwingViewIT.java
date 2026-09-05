@@ -60,22 +60,24 @@ class InventorySwingViewIT {
 	void shouldDelegateAddProductToPresenter() {
 		window.textBox("productNameField").enterText("Laptop");
 
+		window.textBox("productQuantityField").enterText("5");
+
 		window.textBox("productPriceField").enterText("1200.50");
 
 		window.button("addProductButton").click();
 
-		verify(presenter).addProduct("Laptop", 1200.50);
+		verify(presenter).addProduct("Laptop", 5, 1200.50);
 	}
 
 	@Test
 	void shouldDelegateDeleteProductToPresenter() {
-		Product product = new Product("Laptop", 1200.50);
+		Product product = new Product("Laptop", 5, 1200.50);
 
 		setId(product, 10L);
 
 		GuiActionRunner.execute(() -> view.showProducts(List.of(product)));
 
-		GuiActionRunner.execute(() -> window.table("productTable").target().setRowSelectionInterval(0, 0));
+		selectProductRow(0);
 
 		window.button("deleteProductButton").click();
 
@@ -83,8 +85,25 @@ class InventorySwingViewIT {
 	}
 
 	@Test
+	void shouldDelegateUpdateStockToPresenter() {
+		Product product = new Product("Laptop", 5, 1200.50);
+
+		setId(product, 10L);
+
+		GuiActionRunner.execute(() -> view.showProducts(List.of(product)));
+
+		selectProductRow(0);
+
+		window.textBox("stockQuantityField").enterText("20");
+
+		window.button("updateStockButton").click();
+
+		verify(presenter).updateProductStock(10L, 20);
+	}
+
+	@Test
 	void shouldDelegateAssignCategoryToPresenter() {
-		Product product = new Product("Laptop", 1200.50);
+		Product product = new Product("Laptop", 5, 1200.50);
 
 		Category category = new Category("Electronics");
 
@@ -97,7 +116,7 @@ class InventorySwingViewIT {
 			view.showCategories(List.of(category));
 		});
 
-		GuiActionRunner.execute(() -> window.table("productTable").target().setRowSelectionInterval(0, 0));
+		selectProductRow(0);
 
 		window.comboBox("categoryComboBox").selectItem("Electronics");
 
@@ -117,9 +136,9 @@ class InventorySwingViewIT {
 
 	@Test
 	void shouldShowProductsInTable() {
-		Product laptop = new Product("Laptop", 1200.50);
+		Product laptop = new Product("Laptop", 5, 1200.50);
 
-		Product phone = new Product("Phone", 800.00);
+		Product phone = new Product("Phone", 10, 800.00);
 
 		setId(laptop, 10L);
 		setId(phone, 20L);
@@ -128,28 +147,39 @@ class InventorySwingViewIT {
 
 		assertThat(window.table("productTable").rowCount()).isEqualTo(2);
 
-		window.table("productTable").requireCellValue(TableCell.row(0).column(1), "Laptop");
+		assertThat(window.table("productTable").valueAt(TableCell.row(0).column(1))).isEqualTo("Laptop");
 
-		window.table("productTable").requireCellValue(TableCell.row(1).column(1), "Phone");
+		assertThat(window.table("productTable").valueAt(TableCell.row(1).column(1))).isEqualTo("Phone");
 	}
 
 	@Test
-	void shouldShowProductCategoryInTable() {
+	void shouldShowProductQuantityInTable() {
+		Product product = new Product("Laptop", 7, 1200.50);
 
-		Product product = new Product("Laptop", 1200.50);
-		Category category = new Category("Electronics");
-
-		product.setCategory(category);
 		setId(product, 10L);
 
 		GuiActionRunner.execute(() -> view.showProducts(List.of(product)));
 
-		assertThat(window.table("productTable").valueAt(TableCell.row(0).column(3))).isEqualTo("Electronics");
+		assertThat(window.table("productTable").valueAt(TableCell.row(0).column(2))).isEqualTo("7");
+	}
+
+	@Test
+	void shouldShowProductCategoryInTable() {
+		Product product = new Product("Laptop", 5, 1200.50);
+
+		Category category = new Category("Electronics");
+
+		product.setCategory(category);
+
+		setId(product, 10L);
+
+		GuiActionRunner.execute(() -> view.showProducts(List.of(product)));
+
+		assertThat(window.table("productTable").valueAt(TableCell.row(0).column(4))).isEqualTo("Electronics");
 	}
 
 	@Test
 	void shouldShowCategoriesInComboBox() {
-
 		Category electronics = new Category("Electronics");
 
 		Category books = new Category("Books");
@@ -164,7 +194,6 @@ class InventorySwingViewIT {
 
 	@Test
 	void shouldShowErrorWhenDeletingWithoutSelectedProduct() {
-
 		clickAsync("deleteProductButton");
 
 		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
@@ -175,8 +204,41 @@ class InventorySwingViewIT {
 	}
 
 	@Test
-	void shouldShowErrorWhenAssigningCategoryWithoutSelectedProduct() {
+	void shouldShowErrorWhenUpdatingStockWithoutSelectedProduct() {
+		clickAsync("updateStockButton");
 
+		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
+
+		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Please select a product");
+
+		dialog.optionPane().okButton().click();
+	}
+
+	@Test
+	void shouldShowErrorWhenStockQuantityIsInvalid() {
+		Product product = new Product("Laptop", 5, 1200.50);
+
+		setId(product, 10L);
+
+		GuiActionRunner.execute(() -> {
+			view.showProducts(List.of(product));
+
+			window.table("productTable").target().setRowSelectionInterval(0, 0);
+
+			window.textBox("stockQuantityField").target().setText("not-a-number");
+		});
+
+		clickAsync("updateStockButton");
+
+		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
+
+		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Stock quantity must be a valid number");
+
+		dialog.optionPane().okButton().click();
+	}
+
+	@Test
+	void shouldShowErrorWhenAssigningCategoryWithoutSelectedProduct() {
 		clickAsync("assignCategoryButton");
 
 		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
@@ -187,10 +249,30 @@ class InventorySwingViewIT {
 	}
 
 	@Test
-	void shouldShowErrorWhenPriceIsInvalid() {
-
+	void shouldShowErrorWhenProductNumbersAreInvalid() {
 		GuiActionRunner.execute(() -> {
 			window.textBox("productNameField").target().setText("Laptop");
+
+			window.textBox("productQuantityField").target().setText("not-a-number");
+
+			window.textBox("productPriceField").target().setText("1200.50");
+		});
+
+		clickAsync("addProductButton");
+
+		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
+
+		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Quantity and price must be valid numbers");
+
+		dialog.optionPane().okButton().click();
+	}
+
+	@Test
+	void shouldShowErrorWhenPriceIsInvalid() {
+		GuiActionRunner.execute(() -> {
+			window.textBox("productNameField").target().setText("Laptop");
+
+			window.textBox("productQuantityField").target().setText("5");
 
 			window.textBox("productPriceField").target().setText("not-a-number");
 		});
@@ -199,21 +281,20 @@ class InventorySwingViewIT {
 
 		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
 
-		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Price must be a valid number");
+		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Quantity and price must be valid numbers");
 
 		dialog.optionPane().okButton().click();
 	}
 
 	@Test
 	void shouldShowErrorWhenAssigningWithoutCategory() {
-
-		Product product = new Product("Laptop", 1200.50);
+		Product product = new Product("Laptop", 5, 1200.50);
 
 		setId(product, 10L);
 
 		GuiActionRunner.execute(() -> view.showProducts(List.of(product)));
 
-		GuiActionRunner.execute(() -> window.table("productTable").target().setRowSelectionInterval(0, 0));
+		selectProductRow(0);
 
 		clickAsync("assignCategoryButton");
 
@@ -222,6 +303,15 @@ class InventorySwingViewIT {
 		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Please select a category");
 
 		dialog.optionPane().okButton().click();
+	}
+
+	@Test
+	void shouldMakeProductTableNonEditable() {
+		assertThat(window.table("productTable").target().getModel().isCellEditable(0, 0)).isFalse();
+	}
+
+	private void selectProductRow(int row) {
+		GuiActionRunner.execute(() -> window.table("productTable").target().setRowSelectionInterval(row, row));
 	}
 
 	private void clickAsync(String buttonName) {
@@ -238,10 +328,5 @@ class InventorySwingViewIT {
 		} catch (ReflectiveOperationException exception) {
 			throw new IllegalStateException("Cannot set entity id for GUI test", exception);
 		}
-	}
-
-	@Test
-	void shouldMakeProductTableNonEditable() {
-		assertThat(window.table("productTable").target().getModel().isCellEditable(0, 0)).isFalse();
 	}
 }

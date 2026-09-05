@@ -39,7 +39,7 @@ class InventoryPresenterTest {
 
 	@Test
 	void shouldLoadProducts() {
-		List<Product> products = List.of(new Product("Laptop", 1200.50), new Product("Phone", 800.00));
+		List<Product> products = List.of(new Product("Laptop", 5, 1200.50), new Product("Phone", 10, 800.00));
 
 		when(service.getAllProducts()).thenReturn(products);
 
@@ -56,7 +56,6 @@ class InventoryPresenterTest {
 		presenter.loadProducts();
 
 		verify(view).showError("Cannot load products");
-
 		verify(view, never()).showProducts(anyList());
 	}
 
@@ -79,17 +78,16 @@ class InventoryPresenterTest {
 		presenter.loadCategories();
 
 		verify(view).showError("Cannot load categories");
-
 		verify(view, never()).showCategories(anyList());
 	}
 
 	@Test
 	void shouldAddProductAndReloadProducts() {
-		List<Product> products = List.of(new Product("Laptop", 1200.50));
+		List<Product> products = List.of(new Product("Laptop", 5, 1200.50));
 
 		when(service.getAllProducts()).thenReturn(products);
 
-		presenter.addProduct("Laptop", 1200.50);
+		presenter.addProduct("Laptop", 5, 1200.50);
 
 		ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
 
@@ -98,7 +96,7 @@ class InventoryPresenterTest {
 		Product product = captor.getValue();
 
 		assertThat(product.getName()).isEqualTo("Laptop");
-
+		assertThat(product.getQuantity()).isEqualTo(5);
 		assertThat(product.getPrice()).isEqualTo(1200.50);
 
 		verify(service).getAllProducts();
@@ -107,22 +105,28 @@ class InventoryPresenterTest {
 
 	@Test
 	void shouldShowErrorWhenAddingProductFails() {
-		Product invalidProduct = new Product("Laptop", 1200.50);
-
 		doThrow(new IllegalStateException("Cannot add product")).when(service).addProduct(any(Product.class));
 
-		presenter.addProduct(invalidProduct.getName(), invalidProduct.getPrice());
+		presenter.addProduct("Laptop", 5, 1200.50);
 
 		verify(view).showError("Cannot add product");
-
 		verify(service, never()).getAllProducts();
 	}
 
 	@Test
-	void shouldShowErrorWhenProductDataIsInvalid() {
-		presenter.addProduct("", 1200.50);
+	void shouldShowErrorWhenProductNameIsInvalid() {
+		presenter.addProduct("", 5, 1200.50);
 
 		verify(view).showError("Product name cannot be empty");
+
+		verify(service, never()).addProduct(any(Product.class));
+	}
+
+	@Test
+	void shouldShowErrorWhenProductQuantityIsInvalid() {
+		presenter.addProduct("Laptop", -1, 1200.50);
+
+		verify(view).showError("Product quantity cannot be negative");
 
 		verify(service, never()).addProduct(any(Product.class));
 	}
@@ -136,9 +140,7 @@ class InventoryPresenterTest {
 		presenter.deleteProduct(10L);
 
 		verify(service).deleteProduct(10L);
-
 		verify(service).getAllProducts();
-
 		verify(view).showProducts(products);
 	}
 
@@ -149,13 +151,35 @@ class InventoryPresenterTest {
 		presenter.deleteProduct(10L);
 
 		verify(view).showError("Cannot delete product");
+		verify(service, never()).getAllProducts();
+	}
 
+	@Test
+	void shouldUpdateProductStockAndReloadProducts() {
+		List<Product> products = List.of(new Product("Laptop", 10, 1200.50));
+
+		when(service.getAllProducts()).thenReturn(products);
+
+		presenter.updateProductStock(10L, 10);
+
+		verify(service).updateProductStock(10L, 10);
+		verify(service).getAllProducts();
+		verify(view).showProducts(products);
+	}
+
+	@Test
+	void shouldShowErrorWhenUpdatingProductStockFails() {
+		doThrow(new IllegalArgumentException("Product not found")).when(service).updateProductStock(10L, 20);
+
+		presenter.updateProductStock(10L, 20);
+
+		verify(view).showError("Product not found");
 		verify(service, never()).getAllProducts();
 	}
 
 	@Test
 	void shouldAssignCategoryAndReloadProducts() {
-		List<Product> products = List.of(new Product("Laptop", 1200.50));
+		List<Product> products = List.of(new Product("Laptop", 5, 1200.50));
 
 		when(service.getAllProducts()).thenReturn(products);
 
@@ -164,7 +188,6 @@ class InventoryPresenterTest {
 		verify(service).assignCategoryToProduct(10L, 20L);
 
 		verify(service).getAllProducts();
-
 		verify(view).showProducts(products);
 	}
 
@@ -175,7 +198,6 @@ class InventoryPresenterTest {
 		presenter.assignCategory(10L, 20L);
 
 		verify(view).showError("Category not found");
-
 		verify(service, never()).getAllProducts();
 	}
 }

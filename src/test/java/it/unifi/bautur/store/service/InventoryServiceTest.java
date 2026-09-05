@@ -70,8 +70,8 @@ class InventoryServiceTest {
 	void getAllProductsShouldReturnAllProducts() {
 		setUpProductTransaction();
 
-		Product laptop = new Product("Laptop", 1200.50);
-		Product phone = new Product("Phone", 800.00);
+		Product laptop = new Product("Laptop", 5, 1200.50);
+		Product phone = new Product("Phone", 10, 800.00);
 
 		List<Product> products = List.of(laptop, phone);
 
@@ -86,7 +86,7 @@ class InventoryServiceTest {
 	void addProductShouldSaveProduct() {
 		setUpProductTransaction();
 
-		Product product = new Product("Laptop", 1200.50);
+		Product product = new Product("Laptop", 5, 1200.50);
 
 		service.addProduct(product);
 
@@ -97,7 +97,7 @@ class InventoryServiceTest {
 	void getProductByIdShouldReturnProduct() {
 		setUpProductTransaction();
 
-		Product product = new Product("Laptop", 1200.50);
+		Product product = new Product("Laptop", 5, 1200.50);
 
 		when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
@@ -139,10 +139,69 @@ class InventoryServiceTest {
 	}
 
 	@Test
+	void updateProductStockShouldUpdateQuantityAndSaveProduct() {
+		setUpProductTransaction();
+
+		Product product = new Product("Laptop", 5, 1200.50);
+
+		when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+		service.updateProductStock(1L, 10);
+
+		assertThat(product.getQuantity()).isEqualTo(10);
+
+		verify(productRepository).save(product);
+		verify(transactionManager, times(1)).doInTransaction(any());
+	}
+
+	@Test
+	void updateProductStockShouldAllowZeroQuantity() {
+		setUpProductTransaction();
+
+		Product product = new Product("Laptop", 5, 1200.50);
+
+		when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+		service.updateProductStock(1L, 0);
+
+		assertThat(product.getQuantity()).isZero();
+
+		verify(productRepository).save(product);
+	}
+
+	@Test
+	void updateProductStockShouldThrowWhenProductDoesNotExist() {
+		setUpProductTransaction();
+
+		when(productRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> service.updateProductStock(99L, 10)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Product not found");
+
+		verify(productRepository, never()).save(any());
+	}
+
+	@Test
+	void updateProductStockShouldThrowWhenIdIsNull() {
+		assertThatThrownBy(() -> service.updateProductStock(null, 10)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Product id cannot be null");
+
+		verify(transactionManager, never()).doInTransaction(any());
+	}
+
+	@Test
+	void updateProductStockShouldThrowWhenQuantityIsNegative() {
+		assertThatThrownBy(() -> service.updateProductStock(1L, -1)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Product quantity cannot be negative");
+
+		verify(transactionManager, never()).doInTransaction(any());
+	}
+
+	@Test
 	void assignCategoryToProductShouldAssignCategoryAndSaveProduct() {
 		setUpProductTransaction();
 
-		Product product = new Product("Laptop", 1200.50);
+		Product product = new Product("Laptop", 5, 1200.50);
 		Category category = new Category("Electronics");
 
 		when(repositoryProvider.getCategoryRepository()).thenReturn(categoryRepository);
@@ -175,7 +234,7 @@ class InventoryServiceTest {
 	void assignCategoryToProductShouldThrowWhenCategoryDoesNotExist() {
 		setUpProductTransaction();
 
-		Product product = new Product("Laptop", 1200.50);
+		Product product = new Product("Laptop", 5, 1200.50);
 
 		when(repositoryProvider.getCategoryRepository()).thenReturn(categoryRepository);
 

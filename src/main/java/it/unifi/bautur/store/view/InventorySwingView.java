@@ -16,11 +16,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.WindowConstants;
 import javax.swing.table.DefaultTableModel;
 
 import it.unifi.bautur.store.model.Category;
 import it.unifi.bautur.store.model.Product;
-import javax.swing.WindowConstants;
 
 public class InventorySwingView extends JFrame implements InventoryView {
 
@@ -30,12 +30,15 @@ public class InventorySwingView extends JFrame implements InventoryView {
 	private final JTable productTable;
 
 	private final JTextField productNameField;
+	private final JTextField productQuantityField;
 	private final JTextField productPriceField;
+	private final JTextField stockQuantityField;
 
 	private final JComboBox<CategoryItem> categoryComboBox;
 
 	private final JButton addProductButton;
 	private final JButton deleteProductButton;
+	private final JButton updateStockButton;
 	private final JButton assignCategoryButton;
 	private final JButton refreshButton;
 
@@ -43,11 +46,13 @@ public class InventorySwingView extends JFrame implements InventoryView {
 
 	public InventorySwingView() {
 		super("Inventory Management");
+
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		setSize(800, 500);
+
+		setSize(900, 550);
 		setLocationRelativeTo(null);
 
-		productTableModel = new DefaultTableModel(new Object[] { "ID", "Name", "Price", "Category" }, 0) {
+		productTableModel = new DefaultTableModel(new Object[] { "ID", "Name", "Quantity", "Price", "Category" }, 0) {
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -59,6 +64,7 @@ public class InventorySwingView extends JFrame implements InventoryView {
 		productTable = new JTable(productTableModel);
 
 		productTable.setName("productTable");
+
 		productTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		JScrollPane tableScrollPane = new JScrollPane(productTable);
@@ -66,15 +72,18 @@ public class InventorySwingView extends JFrame implements InventoryView {
 		tableScrollPane.setBorder(BorderFactory.createTitledBorder("Products"));
 
 		productNameField = new JTextField();
-
 		productNameField.setName("productNameField");
 
-		productPriceField = new JTextField();
+		productQuantityField = new JTextField();
+		productQuantityField.setName("productQuantityField");
 
+		productPriceField = new JTextField();
 		productPriceField.setName("productPriceField");
 
-		categoryComboBox = new JComboBox<>();
+		stockQuantityField = new JTextField();
+		stockQuantityField.setName("stockQuantityField");
 
+		categoryComboBox = new JComboBox<>();
 		categoryComboBox.setName("categoryComboBox");
 
 		addProductButton = new JButton("Add Product");
@@ -84,6 +93,10 @@ public class InventorySwingView extends JFrame implements InventoryView {
 		deleteProductButton = new JButton("Delete Product");
 
 		deleteProductButton.setName("deleteProductButton");
+
+		updateStockButton = new JButton("Update Stock");
+
+		updateStockButton.setName("updateStockButton");
 
 		assignCategoryButton = new JButton("Assign Category");
 
@@ -95,35 +108,54 @@ public class InventorySwingView extends JFrame implements InventoryView {
 
 		JPanel productInputPanel = createProductInputPanel();
 
+		JPanel stockPanel = createStockPanel();
+
 		JPanel actionPanel = createActionPanel();
 
-		JPanel bottomPanel = new JPanel(new BorderLayout());
+		JPanel controlsPanel = new JPanel(new BorderLayout());
 
-		bottomPanel.add(productInputPanel, BorderLayout.CENTER);
+		controlsPanel.add(productInputPanel, BorderLayout.NORTH);
 
-		bottomPanel.add(actionPanel, BorderLayout.SOUTH);
+		controlsPanel.add(stockPanel, BorderLayout.CENTER);
+
+		controlsPanel.add(actionPanel, BorderLayout.SOUTH);
 
 		add(tableScrollPane, BorderLayout.CENTER);
 
-		add(bottomPanel, BorderLayout.SOUTH);
+		add(controlsPanel, BorderLayout.SOUTH);
 
 		registerListeners();
 	}
 
 	private JPanel createProductInputPanel() {
-		JPanel panel = new JPanel(new GridLayout(2, 3, 10, 5));
+		JPanel panel = new JPanel(new GridLayout(2, 4, 10, 5));
 
 		panel.setBorder(BorderFactory.createTitledBorder("Product"));
 
 		panel.add(new JLabel("Name:"));
-
+		panel.add(new JLabel("Quantity:"));
 		panel.add(new JLabel("Price:"));
-
 		panel.add(new JLabel("Category:"));
 
 		panel.add(productNameField);
+		panel.add(productQuantityField);
 		panel.add(productPriceField);
 		panel.add(categoryComboBox);
+
+		return panel;
+	}
+
+	private JPanel createStockPanel() {
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+		panel.setBorder(BorderFactory.createTitledBorder("Stock"));
+
+		panel.add(new JLabel("New quantity:"));
+
+		stockQuantityField.setColumns(10);
+
+		panel.add(stockQuantityField);
+		panel.add(updateStockButton);
 
 		return panel;
 	}
@@ -144,6 +176,8 @@ public class InventorySwingView extends JFrame implements InventoryView {
 
 		deleteProductButton.addActionListener(event -> deleteSelectedProduct());
 
+		updateStockButton.addActionListener(event -> updateStock());
+
 		assignCategoryButton.addActionListener(event -> assignCategory());
 
 		refreshButton.addActionListener(event -> refresh());
@@ -157,11 +191,13 @@ public class InventorySwingView extends JFrame implements InventoryView {
 		try {
 			String name = productNameField.getText();
 
+			int quantity = Integer.parseInt(productQuantityField.getText());
+
 			double price = Double.parseDouble(productPriceField.getText());
 
-			presenter.addProduct(name, price);
+			presenter.addProduct(name, quantity, price);
 		} catch (NumberFormatException exception) {
-			showError("Price must be a valid number");
+			showError("Quantity and price must be valid numbers");
 		}
 	}
 
@@ -175,6 +211,24 @@ public class InventorySwingView extends JFrame implements InventoryView {
 		}
 
 		presenter.deleteProduct(productId);
+	}
+
+	private void updateStock() {
+		Long productId = getSelectedProductId();
+
+		if (productId == null) {
+			showError("Please select a product");
+
+			return;
+		}
+
+		try {
+			int quantity = Integer.parseInt(stockQuantityField.getText());
+
+			presenter.updateProductStock(productId, quantity);
+		} catch (NumberFormatException exception) {
+			showError("Stock quantity must be a valid number");
+		}
 	}
 
 	private void assignCategory() {
@@ -223,8 +277,8 @@ public class InventorySwingView extends JFrame implements InventoryView {
 
 			String categoryName = category == null ? "" : category.getName();
 
-			productTableModel
-					.addRow(new Object[] { product.getId(), product.getName(), product.getPrice(), categoryName });
+			productTableModel.addRow(new Object[] { product.getId(), product.getName(), product.getQuantity(),
+					product.getPrice(), categoryName });
 		}
 	}
 

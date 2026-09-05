@@ -3,9 +3,9 @@ package it.unifi.bautur.store.service;
 import java.util.List;
 import java.util.Optional;
 
+import it.unifi.bautur.store.model.Category;
 import it.unifi.bautur.store.model.Product;
 import it.unifi.bautur.store.repository.TransactionManager;
-import it.unifi.bautur.store.model.Category;
 
 public class InventoryService {
 
@@ -35,39 +35,54 @@ public class InventoryService {
 	}
 
 	public void deleteProduct(Long id) {
-	    if (id == null) {
-	        throw new IllegalArgumentException("Product id cannot be null");
-	    }
+		if (id == null) {
+			throw new IllegalArgumentException("Product id cannot be null");
+		}
 
-	    transactionManager.doInTransaction(provider -> {
-	        provider.getProductRepository().deleteById(id);
-	        return null;
-	    });
+		transactionManager.doInTransaction(provider -> {
+			provider.getProductRepository().deleteById(id);
+			return null;
+		});
 	}
-	
+
+	public void updateProductStock(Long productId, int quantity) {
+		if (productId == null) {
+			throw new IllegalArgumentException("Product id cannot be null");
+		}
+
+		if (quantity < 0) {
+			throw new IllegalArgumentException("Product quantity cannot be negative");
+		}
+
+		transactionManager.doInTransaction(provider -> {
+			Product product = provider.getProductRepository().findById(productId)
+					.orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+			product.setQuantity(quantity);
+
+			provider.getProductRepository().save(product);
+
+			return null;
+		});
+	}
+
 	public void assignCategoryToProduct(Long productId, Long categoryId) {
-	    transactionManager.doInTransaction(provider -> {
-	        Product product = provider.getProductRepository()
-	                .findById(productId)
-	                .orElseThrow(() ->
-	                        new IllegalArgumentException("Product not found"));
+		transactionManager.doInTransaction(provider -> {
+			Product product = provider.getProductRepository().findById(productId)
+					.orElseThrow(() -> new IllegalArgumentException("Product not found"));
 
-	        Category category = provider.getCategoryRepository()
-	                .findById(categoryId)
-	                .orElseThrow(() ->
-	                        new IllegalArgumentException("Category not found"));
+			Category category = provider.getCategoryRepository().findById(categoryId)
+					.orElseThrow(() -> new IllegalArgumentException("Category not found"));
 
-	        product.setCategory(category);
+			product.setCategory(category);
 
-	        provider.getProductRepository().save(product);
+			provider.getProductRepository().save(product);
 
-	        return null;
-	    });
+			return null;
+		});
 	}
-	
+
 	public List<Category> getAllCategories() {
-	    return transactionManager.doInTransaction(
-	            provider -> provider.getCategoryRepository().findAll()
-	    );
+		return transactionManager.doInTransaction(provider -> provider.getCategoryRepository().findAll());
 	}
 }
