@@ -135,21 +135,21 @@ class InventorySwingViewIT {
 
 	@Test
 	void shouldShowProductCategoryInTable() {
-		Product product = new Product("Laptop", 1200.50);
 
+		Product product = new Product("Laptop", 1200.50);
 		Category category = new Category("Electronics");
 
 		product.setCategory(category);
-
 		setId(product, 10L);
 
 		GuiActionRunner.execute(() -> view.showProducts(List.of(product)));
 
-		window.table("productTable").requireCellValue(TableCell.row(0).column(3), "Electronics");
+		assertThat(window.table("productTable").valueAt(TableCell.row(0).column(3))).isEqualTo("Electronics");
 	}
 
 	@Test
 	void shouldShowCategoriesInComboBox() {
+
 		Category electronics = new Category("Electronics");
 
 		Category books = new Category("Books");
@@ -159,29 +159,36 @@ class InventorySwingViewIT {
 
 		GuiActionRunner.execute(() -> view.showCategories(List.of(electronics, books)));
 
-		window.comboBox("categoryComboBox").requireItemCount(2);
-
-		window.comboBox("categoryComboBox").requireSelection("Electronics");
+		assertThat(window.comboBox("categoryComboBox").contents()).containsExactly("Electronics", "Books");
 	}
 
 	@Test
 	void shouldShowErrorWhenDeletingWithoutSelectedProduct() {
+
 		clickAsync("deleteProductButton");
 
-		window.dialog(DIALOG_TIMEOUT).requireVisible().optionPane().requireErrorMessage()
-				.requireMessage("Please select a product").okButton().click();
+		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
+
+		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Please select a product");
+
+		dialog.optionPane().okButton().click();
 	}
 
 	@Test
 	void shouldShowErrorWhenAssigningCategoryWithoutSelectedProduct() {
+
 		clickAsync("assignCategoryButton");
 
-		window.dialog(DIALOG_TIMEOUT).requireVisible().optionPane().requireErrorMessage()
-				.requireMessage("Please select a product").okButton().click();
+		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
+
+		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Please select a product");
+
+		dialog.optionPane().okButton().click();
 	}
 
 	@Test
 	void shouldShowErrorWhenPriceIsInvalid() {
+
 		GuiActionRunner.execute(() -> {
 			window.textBox("productNameField").target().setText("Laptop");
 
@@ -190,12 +197,16 @@ class InventorySwingViewIT {
 
 		clickAsync("addProductButton");
 
-		window.dialog(DIALOG_TIMEOUT).requireVisible().optionPane().requireErrorMessage()
-				.requireMessage("Price must be a valid number").okButton().click();
+		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
+
+		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Price must be a valid number");
+
+		dialog.optionPane().okButton().click();
 	}
 
 	@Test
 	void shouldShowErrorWhenAssigningWithoutCategory() {
+
 		Product product = new Product("Laptop", 1200.50);
 
 		setId(product, 10L);
@@ -206,8 +217,11 @@ class InventorySwingViewIT {
 
 		clickAsync("assignCategoryButton");
 
-		window.dialog(DIALOG_TIMEOUT).requireVisible().optionPane().requireErrorMessage()
-				.requireMessage("Please select a category").okButton().click();
+		var dialog = window.dialog(DIALOG_TIMEOUT).requireVisible();
+
+		assertThat(dialog.optionPane().target().getMessage()).isEqualTo("Please select a category");
+
+		dialog.optionPane().okButton().click();
 	}
 
 	private void clickAsync(String buttonName) {
@@ -224,5 +238,10 @@ class InventorySwingViewIT {
 		} catch (ReflectiveOperationException exception) {
 			throw new IllegalStateException("Cannot set entity id for GUI test", exception);
 		}
+	}
+
+	@Test
+	void shouldMakeProductTableNonEditable() {
+		assertThat(window.table("productTable").target().getModel().isCellEditable(0, 0)).isFalse();
 	}
 }

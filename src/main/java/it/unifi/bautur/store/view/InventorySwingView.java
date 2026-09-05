@@ -20,6 +20,7 @@ import javax.swing.table.DefaultTableModel;
 
 import it.unifi.bautur.store.model.Category;
 import it.unifi.bautur.store.model.Product;
+import javax.swing.WindowConstants;
 
 public class InventorySwingView extends JFrame implements InventoryView {
 
@@ -38,12 +39,11 @@ public class InventorySwingView extends JFrame implements InventoryView {
 	private final JButton assignCategoryButton;
 	private final JButton refreshButton;
 
-	private InventoryPresenter presenter;
+	private transient InventoryPresenter presenter;
 
 	public InventorySwingView() {
 		super("Inventory Management");
-
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		setSize(800, 500);
 		setLocationRelativeTo(null);
 
